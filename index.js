@@ -38,29 +38,29 @@ app.get('/tasks', async (request, response) => {
         const result = await pool.query('SELECT * FROM tasks'); /// forgot to add table name
         response.json(result.rows);
     } catch (error) {
-        console.error("Database error:", error) // log error to server
+        console.error("Database error:", error); // log error to server
         response.status(500).json({error: "Database error! Couldn't get tasks. Please Try again."})
     }
   
 });
 
 // POST /tasks - Add a new task
-app.post('/tasks', (request, response) => {
+app.post('/tasks', async (request, response) => {
     const { description, status } = request.body; // remove id, as SERIAL says all need to be unique
-    if ( !description || !status) { // also remove id
+    if ( !description || !status) { // make both required, also need to remove id
         return response.status(400).json({ error: "Description and status are required! " });
     }
     try {
-        const resluts = await pool.query(
-            'INSERT INTO tasks (desciption, status) VALUES ($1, $2) RETURNING *', [description, status]
+        const result = await pool.query(
+            'INSERT INTO tasks (desciption, status) VALUES ($1, $2) RETURNING *', [description, status] /// 1 and 2 are placeholders
         );
-        // not done
-        
+        response.status(201).json(result.rows[0]); // tasks was compeleted
+    } catch (error) {
+        console.error("Database error:", error);
+        response.status(500).json({error: "Database error! Couldn't add a task. Please Try again."}) // error couldn't add a new task
     }
-
-    // tasks.push({ description, status });
-    // response.status(201).json({ message: 'Task added successfully' });
 });
+
 
 // PUT /tasks/:id - Update a task's status
 app.put('/tasks/:id', (request, response) => {
