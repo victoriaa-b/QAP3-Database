@@ -24,29 +24,42 @@ async function createTable() {
             status TEXT NOT NULL
             );`
         );
-      console.log(" The 'tasks' table has been created!");
+      console.log("The 'tasks' table has been created!");
     } catch (error) {
-      console.error("Error! When creating the table:", error)
+      console.error("Error! Couldn't create table:", error)
     }
 }
+// 
+createTable();
 
 // GET /tasks - Get all tasks
-// app.get('/tasks', async (request, response) => {
-//     try {
-//         const result = await pool.query("SELECT * FROM")
-//     }
-//    // response.json(tasks);
-// });
+app.get('/tasks', async (request, response) => {
+    try {
+        const result = await pool.query('SELECT * FROM tasks'); /// forgot to add table name
+        response.json(result.rows);
+    } catch (error) {
+        console.error("Database error:", error) // log error to server
+        response.status(500).json({error: "Database error! Couldn't get tasks. Please Try again."})
+    }
+  
+});
 
 // POST /tasks - Add a new task
 app.post('/tasks', (request, response) => {
-    const { id, description, status } = request.body;
-    if (!id || !description || !status) {
-        return response.status(400).json({ error: 'All fields (id, description, status) are required' });
+    const { description, status } = request.body; // remove id, as SERIAL says all need to be unique
+    if ( !description || !status) { // also remove id
+        return response.status(400).json({ error: "Description and status are required! " });
+    }
+    try {
+        const resluts = await pool.query(
+            'INSERT INTO tasks (desciption, status) VALUES ($1, $2) RETURNING *', [description, status]
+        );
+        // not done
+        
     }
 
-    tasks.push({ id, description, status });
-    response.status(201).json({ message: 'Task added successfully' });
+    // tasks.push({ description, status });
+    // response.status(201).json({ message: 'Task added successfully' });
 });
 
 // PUT /tasks/:id - Update a task's status
