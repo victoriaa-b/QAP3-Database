@@ -1,18 +1,42 @@
 const express = require('express');
+const { Pool } = require('pg');
 const app = express();
 const PORT = 3000;
 
 app.use(express.json());
 
-let tasks = [
-    { id: 1, description: 'Buy groceries', status: 'incomplete' },
-    { id: 2, description: 'Read a book', status: 'complete' },
-];
+// connection to the database
+const pool = new Pool({
+  user: "postgres",
+  host: "localhost",
+  database: "tasks_database",
+  password: "tasks24!",
+  port: "5432",
+});
+
+// need to create a table function
+async function createTable() {
+    try {
+        await pool.query(
+            `CREATE TABLE IF NOT EXISTS tasks (
+            id SERIAL PRIMARY KEY,
+            description TEXT NOT NULL,
+            status TEXT NOT NULL
+            );`
+        );
+      console.log(" The 'tasks' table has been created!");
+    } catch (error) {
+      console.error("Error! When creating the table:", error)
+    }
+}
 
 // GET /tasks - Get all tasks
-app.get('/tasks', (req, res) => {
-    res.json(tasks);
-});
+// app.get('/tasks', async (request, response) => {
+//     try {
+//         const result = await pool.query("SELECT * FROM")
+//     }
+//    // response.json(tasks);
+// });
 
 // POST /tasks - Add a new task
 app.post('/tasks', (request, response) => {
