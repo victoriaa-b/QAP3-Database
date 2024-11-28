@@ -1,0 +1,31 @@
+// Part 2: MongoDB Queries - Database QAP 3
+
+// 1. Need to connect to the MongoDB instance that was created 
+use bookStore;  
+
+// 2. Create a collection named books
+db.createCollection("books");
+
+// 3. Insert Sample Data
+db.books.insertMany([
+    { title: "The Hobbit", author: "J.R.R Tolkien", genre: "Fantasy", publishedYear: 1937 },
+    { title: "To Kill a Mockingbird", author: "Harper Lee", genre: "Fiction", publishedYear: 1960 },
+    { title: "1984", author: "George Orwell", genre: "Dystopian", publishedYear: 1949 }
+]);
+
+// 4. Write Queries
+//(a). Retrieve the titles of all books.
+db.books.find({},{_id: 0, title: 1});
+
+//(b).Find all books written by “J.R.R. Tolkien”.
+db.books.find({ author: "J.R.R Tolkien"});
+
+//(c). Update the genre of “1984” to "Science Fiction".
+db.books.updateOne(
+    { title: "1984" },
+    { $set: { genre: "Science Fiction"}}
+);
+
+//(d). Delete the book “The Hobbit”.
+db.books.deleteOne({ title: "The Hobbit"});
+
