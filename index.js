@@ -47,12 +47,13 @@ app.get('/tasks', async (request, response) => {
 // POST /tasks - Add a new task
 app.post('/tasks', async (request, response) => {
     const { description, status } = request.body; // remove id, as SERIAL says all need to be unique
+   
     if ( !description || !status) { // make both required, also need to remove id
         return response.status(400).json({ error: "Description and status are required! " });
     }
     try {
         const result = await pool.query(
-            'INSERT INTO tasks (desciption, status) VALUES ($1, $2) RETURNING *', [description, status] /// 1 and 2 are placeholders
+            'INSERT INTO tasks (description, status) VALUES ($1, $2) RETURNING *', [description, status] /// 1 and 2 are placeholders
         );
         response.status(201).json(result.rows[0]); // tasks was compeleted
     } catch (error) {
@@ -81,20 +82,31 @@ app.put('/tasks/:id', async (request, response) => {
     response.json(result.rows[0]); // this will show the updated taks 
     } catch (error) {
         console.error("DataBase error:", error)
-        response.status(500).json({error: "Database error! Task status could not be found. Please Try again."})
+        response.status(500).json({error: "Database error! The task could not be completed. Please Try again."})
     }
 });
 
 // DELETE /tasks/:id - Delete a task
-app.delete('/tasks/:id', (request, response) => {
-    const taskId = parseInt(request.params.id, 10);
-    const initialLength = tasks.length;
-    tasks = tasks.filter(t => t.id !== taskId);
+app.delete('/tasks/:id', async (request, response) => {
+    const { id } = request.params;
 
-    if (tasks.length === initialLength) {
-        return response.status(404).json({ error: 'Task not found' });
+    if (!id || id <= 0 || !Number.isInteger(Number(id))) { // need to ensure that the id is an integer and positive
+        return response.status(400).json({ error: "Need a valid ID"})
     }
-    response.json({ message: 'Task deleted successfully' });
+
+    try {
+        const result = await pool.query('DELETE FROM tasks WHERE id = $1 RETURNING *', [id]);
+
+    if (result.rowCount === 0){ // ensure task is found and deleted 
+            return response.status(404).json({ error: "Task not found" });
+    }
+        response.json({message: "Task was deleted successfully", deleteTask: result.rows[0] }); // message that task was deleted
+
+    } catch (error) {
+        console.error("DataBase error:", error)
+        response.status(500).json({error: "Database error! The task could not be deleted. Please Try again."})
+
+    }
 });
 
 app.listen(PORT, () => {
