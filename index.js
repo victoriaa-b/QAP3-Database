@@ -63,16 +63,26 @@ app.post('/tasks', async (request, response) => {
 
 
 // PUT /tasks/:id - Update a task's status
-app.put('/tasks/:id', (request, response) => {
-    const taskId = parseInt(request.params.id, 10);
+app.put('/tasks/:id', async (request, response) => {
     const { status } = request.body;
-    const task = tasks.find(t => t.id === taskId);
-
-    if (!task) {
-        return response.status(404).json({ error: 'Task not found' });
+    const { id } = request.params;
+    
+    if (!status || !id || id <= 0) { // both are required 
+        return response.status(400).json ({error: "Status and ID are required!"})
     }
-    task.status = status;
-    response.json({ message: 'Task updated successfully' });
+
+    try { // update the tasks status in the database
+        const result = await pool.query('UPDATE tasks SET status = $1 WHERE id = $2 RETURNING *', [status, id]
+        );
+
+    if (result.rowCount === 0) {
+        return response.status(404).json({ error: "Task not found" });
+    }
+    response.json(result.rows[0]); // this will show the updated taks 
+    } catch (error) {
+        console.error("DataBase error:", error)
+        response.status(500).json({error: "Database error! Task status could not be found. Please Try again."})
+    }
 });
 
 // DELETE /tasks/:id - Delete a task
